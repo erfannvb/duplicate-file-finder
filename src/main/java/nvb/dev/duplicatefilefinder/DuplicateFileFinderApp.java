@@ -32,12 +32,23 @@ public class DuplicateFileFinderApp {
                 return;
             }
 
-            for (Map.Entry<Long, List<Path>> entry : potentialDuplicates.entrySet()) {
-                System.out.println("\nPotential duplicate group (" + entry.getKey() + " bytes):");
-                for (Path file : entry.getValue()) {
-                    System.out.println(file);
-                }
+            List<Path> candidateFiles = potentialDuplicates.values()
+                    .stream()
+                    .flatMap(List::stream)
+                    .toList();
+
+            Map<String, List<Path>> hashedGroupFiles = FileHashGrouper.group(candidateFiles);
+            Map<String, List<Path>> duplicateGroups = FileHashGrouper.filterDuplicateGroups(hashedGroupFiles);
+            if (duplicateGroups.isEmpty()) {
+                System.out.println("No duplicate files found.");
+                return;
             }
+
+            System.out.println("\nDuplicate groups:");
+            for (List<Path> duplicateFiles : duplicateGroups.values()) {
+                System.out.println(duplicateFiles);
+            }
+
         } catch (IOException e) {
             System.out.println("Failed to scan files: " + e.getMessage());
         }
